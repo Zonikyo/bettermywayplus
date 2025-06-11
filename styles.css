@@ -2,19 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Map fills above nav */
-#map { height: calc(100vh - 56px); }
+/* Map fills above nav, base layer */
+#map { height: calc(100vh - 56px); z-index: 0; }
 
-/* Panel styles */
-.tab-panel { position: absolute; bottom: 56px; left: 0; right: 0; background: rgba(17,24,39,0.95); backdrop-filter: blur(8px); max-height: 50vh; overflow-y: auto; border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
+/* Panel styles: above map */
+.tab-panel {
+  position: absolute;
+  bottom: 56px;
+  left: 0;
+  right: 0;
+  background: rgba(17,24,39,0.95);
+  backdrop-filter: blur(8px);
+  max-height: 50vh;
+  overflow-y: auto;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  z-index: 10;
+}
 
-/* Nav */
+/* Nav: above map */
+nav {
+  z-index: 10;
+}
+
+/* Nav button active state */
 .nav-btn.active svg, .nav-btn.active span { color: #3B82F6; }
 .nav-btn svg, .nav-btn span { color: #9CA3AF; }
 
-/* List items pop-in */
+/* Pop-in animation for items */
 @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .item { padding: 0.75rem; background: #1F2937; border-radius: 0.75rem; color: white; animation: popIn 0.3s ease-out forwards; opacity: 0; }
 
-/* Input focus */
+/* Input focus outline */
 input:focus { outline: none; border: 2px solid #3B82F6; }
