@@ -1,117 +1,74 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full" data-theme="light">
+<html lang="en" class="h-full bg-gray-900">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Canberra Trip Planner</title>
-
-  <!-- Modern font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS CDN -->
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-  <!-- Manifest & iOS PWA -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="flex flex-col h-full bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-inter">
-  <header class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-4 shadow-md flex items-center justify-between rounded-b-2xl">
-    <h1 class="text-2xl font-semibold">Canberra Trip Planner</h1>
-    <div class="flex items-center space-x-2">
-      <button id="now-btn" class="px-3 py-1 bg-blue-600 text-white rounded-full shadow hover:bg-blue-700 transition">Now</button>
-      <button id="theme-toggle" class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-        <!-- Sun/Moon icon toggle -->
-        <svg id="icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 3v1m0 16v1m8.66-9h-1M4.34 12h-1m15.07-7.07l-.7.7M6.34 17.66l-.7.7m12.02 0l-.7-.7M6.34 6.34l-.7-.7M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg>
-        <svg id="icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
-      </button>
+<body class="flex flex-col h-full font-inter text-gray-200">
+  <!-- Map Container -->
+  <div id="map" class="flex-1 w-full"></div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bg-gray-800 border-t border-gray-700 flex justify-around py-2">
+    <button data-tab="plan" class="nav-btn flex flex-col items-center focus:outline-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17v-2a4 4 0 018 0v2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
+      <span class="text-xs">Plan</span>
+    </button>
+    <button data-tab="nearby" class="nav-btn flex flex-col items-center focus:outline-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 12 17.657 7.343M6.343 6.343L10.586 10.586 6.343 14.829"/></svg>
+      <span class="text-xs">Nearby</span>
+    </button>
+    <button data-tab="live" class="nav-btn flex flex-col items-center focus:outline-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3"/></svg>
+      <span class="text-xs">Live</span>
+    </button>
+  </nav>
+
+  <!-- Tab Overlays -->
+  <div id="tab-plan" class="tab-panel">
+    <div class="p-4 space-y-4">
+      <input id="from" placeholder="From" class="w-full p-3 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" list="stops" />
+      <input id="to" placeholder="To" class="w-full p-3 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" list="stops" />
+      <div class="flex space-x-2">
+        <input id="datetime" type="datetime-local" class="flex-1 p-3 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" />
+        <button id="now-btn" class="p-3 bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transition">Now</button>
+      </div>
+      <button id="plan-btn" class="w-full py-3 bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transition">Plan Trip</button>
     </div>
-  </header>
+    <ul id="itinerary" class="space-y-2 p-4"></ul>
+  </div>
 
-  <div class="flex flex-1 overflow-hidden">
-    <!-- Menus as tabs -->
-    <aside id="sidebar" class="bg-white dark:bg-gray-800 w-72 p-4 space-y-4 overflow-auto rounded-tr-2xl rounded-br-2xl md:animate-fadeIn">
-      <nav class="flex space-x-2 mb-4">
-        <button data-tab="plan" class="tab-btn flex-1 py-2 bg-blue-600 text-white rounded-full">Plan</button>
-        <button data-tab="nearby" class="tab-btn flex-1 py-2 bg-gray-200 dark:bg-gray-700 rounded-full">Nearby</button>
-        <button data-tab="live" class="tab-btn flex-1 py-2 bg-gray-200 dark:bg-gray-700 rounded-full">Live</button>
-      </nav>
+  <div id="tab-nearby" class="tab-panel hidden">
+    <div class="p-4 space-y-4">
+      <h2 class="text-lg font-semibold">Nearby Stops</h2>
+      <ul id="nearby-stops" class="space-y-2"></ul>
+      <h2 class="text-lg font-semibold">Nearby Routes</h2>
+      <ul id="nearby-routes" class="space-y-2"></ul>
+    </div>
+  </div>
 
-      <!-- Plan Tab -->
-      <div id="tab-plan" class="tab-content">
-        <form id="trip-form" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium">From</label>
-            <input id="from" list="stops" type="text" class="mt-1 w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Address or stop" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium">To</label>
-            <input id="to" list="stops" type="text" class="mt-1 w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Address or stop" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Departure</label>
-            <input id="datetime" type="datetime-local" class="mt-1 w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" />
-          </div>
-          <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Plan Trip</button>
-        </form>
-        <ul id="itinerary" class="mt-4 space-y-2"></ul>
-      </div>
-
-      <!-- Nearby Tab -->
-      <div id="tab-nearby" class="tab-content hidden">
-        <h2 class="text-lg font-semibold mb-2">Nearby Stops</h2>
-        <ul id="nearby-stops" class="space-y-2 mb-4"></ul>
-        <h2 class="text-lg font-semibold mb-2">Nearby Routes</h2>
-        <ul id="nearby-routes" class="space-y-2"></ul>
-      </div>
-
-      <!-- Live Tab -->
-      <div id="tab-live" class="tab-content hidden">
-        <h2 class="text-lg font-semibold mb-2">Live Directions</h2>
-        <ul id="live-steps" class="space-y-2"></ul>
-      </div>
-    </aside>
-
-    <!-- Map -->
-    <div id="map" class="flex-1 relative"></div>
+  <div id="tab-live" class="tab-panel hidden">
+    <div class="p-4 space-y-4">
+      <h2 class="text-lg font-semibold">Live Directions</h2>
+      <ul id="live-steps" class="space-y-2"></ul>
+    </div>
   </div>
 
   <datalist id="stops"></datalist>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="/app.js"></script>
-  <script>
-    // Initialize theme
-    const html = document.documentElement;
-    const iconLight = document.getElementById('icon-light');
-    const iconDark = document.getElementById('icon-dark');
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const isDark = html.classList.toggle('dark');
-      iconLight.classList.toggle('hidden', !isDark);
-      iconDark.classList.toggle('hidden', isDark);
-    });
-
-    // 'Now' button sets datetime to current
-    document.getElementById('now-btn').addEventListener('click', () => {
-      document.getElementById('datetime').value = new Date().toISOString().slice(0,16);
-    });
-
-    // Tab switching
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-      document.getElementById(`tab-${tab}`).classList.remove('hidden');
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('bg-blue-600','bg-gray-200') || b.classList.replace('text-white','text-gray-700'));
-      btn.classList.replace('bg-gray-200','bg-blue-600'); btn.classList.add('text-white');
-    }));
-  </script>
 </body>
 </html>
