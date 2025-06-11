@@ -55,3 +55,18 @@ input[type=text] {
 /* Itinerary list animation */
 @keyframes itemFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .itinerary-item { opacity: 0; animation: itemFade 0.5s forwards; }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Font */
+.font-inter { font-family: 'Inter', sans-serif; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+.animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+@keyframes dash { to { stroke-dashoffset: -18; } }
+.leaflet-polyline.animated-route path { stroke-dasharray: 6,12; animation: dash 1s linear infinite; }
+@keyframes itemFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.itinerary-item, .nearby-item, .live-item { opacity: 0; animation: itemFade 0.5s forwards; }
