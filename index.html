@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Canberra Trip Planner</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/styles.css">
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+  <header class="header">
+    <h1>Canberra Trip Planner</h1>
+  </header>
+
+  <main class="container">
+    <section id="planner" class="panel">
+      <h2>Plan a Trip</h2>
+      <form id="trip-form">
+        <input id="from" type="text" placeholder="From (address or stop)" required>
+        <input id="to" type="text" placeholder="To (address or stop)" required>
+        <button type="submit">Plan Trip</button>
+      </form>
+      <div id="map" class="map"></div>
+      <ul id="itinerary" class="itinerary"></ul>
+    </section>
+
+    <section id="favorites" class="panel">
+      <h2>Favorites</h2>
+      <ul id="fav-list"></ul>
+      <button id="add-home">Set Home</button>
+      <button id="add-work">Set Work</button>
+      <button id="add-school">Set School</button>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="/app.js"></script>
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js');
+      });
+    }
+  </script>
+</body>
+</html>
