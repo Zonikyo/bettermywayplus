@@ -20,18 +20,6 @@
   <!-- Map Container -->
   <div id="map" class="flex-1 w-full relative"></div>
 
-  <!-- Bottom Navigation -->
-  <nav class="bg-gray-800 border-t border-gray-700 flex justify-around py-2">
-    <button id="nav-plan" class="nav-btn flex flex-col items-center focus:outline-none active">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17v-2a4 4 0 018 0v2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
-      <span class="text-xs">Plan</span>
-    </button>
-    <button id="nav-nearby" class="nav-btn flex flex-col items-center focus:outline-none">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 12 17.657 7.343M6.343 6.343L10.586 10.586 6.343 14.829"/></svg>
-      <span class="text-xs">Nearby</span>
-    </button>
-  </nav>
-
   <!-- Panel: Plan & Live -->
   <div id="panel-plan" class="tab-panel">
     <div class="p-4 space-y-4">
@@ -53,6 +41,20 @@
       <ul id="nearby-stops" class="space-y-2"></ul>
     </div>
   </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bg-gray-800 border-t border-gray-700 flex justify-around py-2 relative">
+    <button id="nav-plan" class="nav-btn flex flex-col items-center focus:outline-none active">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17v-2a4 4 0 018 0v2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
+      <span class="text-xs">Plan</span>
+    </button>
+    <button id="nav-nearby" class="nav-btn flex flex-col items-center focus:outline-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 12 17.657 7.343M6.343 6.343L10.586 10.586 6.343 14.829"/></svg>
+      <span class="text-xs">Nearby</span>
+    </button>
+  </nav>
+
+  <datalist id="stops"></datalist>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="/app.js"></script>
