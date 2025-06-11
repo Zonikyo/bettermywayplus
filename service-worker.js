@@ -1,37 +1,11 @@
-const CACHE_NAME = 'cantrip-cache-v1';
+const CACHE_NAME = 'cantrip-v4';
 const ASSETS = [
   '/', '/index.html', '/styles.css', '/app.js', '/manifest.json',
-  '/icons/icon-192.png', '/icons/icon-512.png'
+  '/data/stops.json', '/icons/icon-192.png'
 ];
-
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
-  );
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
 });
-
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // Timetables and GTFS-R caching
-  if (url.pathname.endsWith('.json') || url.pathname.includes('gtfs-realtime')) {
-    event.respondWith(
-      caches.open('transit-data').then(cache =>
-        fetch(event.request)
-          .then(response => {
-            cache.put(event.request, response.clone());
-            return response;
-          })
-          .catch(() => cache.match(event.request))
-      )
-    );
-    return;
-  }
-
-  // Default asset caching
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
 });
