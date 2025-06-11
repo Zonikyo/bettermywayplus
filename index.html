@@ -18,55 +18,41 @@
 </head>
 <body class="flex flex-col h-full font-inter text-gray-200">
   <!-- Map Container -->
-  <div id="map" class="flex-1 w-full"></div>
+  <div id="map" class="flex-1 w-full relative"></div>
 
   <!-- Bottom Navigation -->
   <nav class="bg-gray-800 border-t border-gray-700 flex justify-around py-2">
-    <button data-tab="plan" class="nav-btn flex flex-col items-center focus:outline-none">
+    <button id="nav-plan" class="nav-btn flex flex-col items-center focus:outline-none active">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17v-2a4 4 0 018 0v2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
       <span class="text-xs">Plan</span>
     </button>
-    <button data-tab="nearby" class="nav-btn flex flex-col items-center focus:outline-none">
+    <button id="nav-nearby" class="nav-btn flex flex-col items-center focus:outline-none">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 12 17.657 7.343M6.343 6.343L10.586 10.586 6.343 14.829"/></svg>
       <span class="text-xs">Nearby</span>
     </button>
-    <button data-tab="live" class="nav-btn flex flex-col items-center focus:outline-none">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3"/></svg>
-      <span class="text-xs">Live</span>
-    </button>
   </nav>
 
-  <!-- Tab Overlays -->
-  <div id="tab-plan" class="tab-panel">
+  <!-- Panel: Plan & Live -->
+  <div id="panel-plan" class="tab-panel">
     <div class="p-4 space-y-4">
-      <input id="from" placeholder="From" class="w-full p-3 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" list="stops" />
-      <input id="to" placeholder="To" class="w-full p-3 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" list="stops" />
-      <div class="flex space-x-2">
-        <input id="datetime" type="datetime-local" class="flex-1 p-3 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" />
-        <button id="now-btn" class="p-3 bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transition">Now</button>
+      <div class="relative">
+        <input id="searchDest" placeholder="Where to?" class="w-full p-3 pr-12 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" />
+        <button id="search-btn" class="absolute right-2 top-2 p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 16s1.5-2 4-2 4 2 4 2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
+        </button>
       </div>
-      <button id="plan-btn" class="w-full py-3 bg-blue-600 rounded-xl shadow-lg hover:bg-blue-700 transition">Plan Trip</button>
+      <div id="route-options" class="space-y-2"></div>
+      <button id="start-live" class="hidden w-full py-3 bg-green-600 rounded-xl shadow-lg hover:bg-green-700 transition">Start Trip</button>
     </div>
-    <ul id="itinerary" class="space-y-2 p-4"></ul>
   </div>
 
-  <div id="tab-nearby" class="tab-panel hidden">
+  <!-- Panel: Nearby -->
+  <div id="panel-nearby" class="tab-panel hidden">
     <div class="p-4 space-y-4">
       <h2 class="text-lg font-semibold">Nearby Stops</h2>
       <ul id="nearby-stops" class="space-y-2"></ul>
-      <h2 class="text-lg font-semibold">Nearby Routes</h2>
-      <ul id="nearby-routes" class="space-y-2"></ul>
     </div>
   </div>
-
-  <div id="tab-live" class="tab-panel hidden">
-    <div class="p-4 space-y-4">
-      <h2 class="text-lg font-semibold">Live Directions</h2>
-      <ul id="live-steps" class="space-y-2"></ul>
-    </div>
-  </div>
-
-  <datalist id="stops"></datalist>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="/app.js"></script>
