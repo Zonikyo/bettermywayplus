@@ -36,3 +36,22 @@ input[type=text] {
 .leaflet-container {
   width: 100%; height: 100%;
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+.animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
+
+/* Animated route dash */
+.leaflet-polyline.animated-route path {
+  stroke-dasharray: 6, 12;
+  animation: dash 1s linear infinite;
+}
+@keyframes dash { to { stroke-dashoffset: -18; } }
+
+/* Itinerary list animation */
+@keyframes itemFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.itinerary-item { opacity: 0; animation: itemFade 0.5s forwards; }
