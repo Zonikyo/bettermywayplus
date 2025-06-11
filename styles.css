@@ -2,18 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Full-height map */
-#map { height: calc(100vh - 64px); }
+/* Map fills above nav */
+#map { height: calc(100vh - 56px); }
 
-/* Tabs overlay */
-.tab-panel { position: absolute; bottom: 64px; left: 0; right: 0; background: rgba(17,24,39,0.9); backdrop-filter: blur(8px); max-height: 60vh; overflow-y: auto; border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
+/* Panel styles */
+.tab-panel { position: absolute; bottom: 56px; left: 0; right: 0; background: rgba(17,24,39,0.95); backdrop-filter: blur(8px); max-height: 50vh; overflow-y: auto; border-top-left-radius: 1rem; border-top-right-radius: 1rem; }
 
-/* Nav button state */
-.nav-btn.active svg, .nav-btn.active span { color: #60A5FA; }
+/* Nav */
+.nav-btn.active svg, .nav-btn.active span { color: #3B82F6; }
+.nav-btn svg, .nav-btn span { color: #9CA3AF; }
 
-/* List item */
-.itinerary-item, .nearby-item, .live-item { padding: 0.75rem; background: #1F2937; border-radius: 0.75rem; animation: popIn 0.3s ease-out forwards; opacity: 0; }
+/* List items pop-in */
 @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.item { padding: 0.75rem; background: #1F2937; border-radius: 0.75rem; color: white; animation: popIn 0.3s ease-out forwards; opacity: 0; }
 
 /* Input focus */
 input:focus { outline: none; border: 2px solid #3B82F6; }
