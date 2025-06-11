@@ -1,13 +1,55 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-#map { height: calc(100vh - 56px); z-index: 0; }
-.tab-panel { position: absolute; bottom: 56px; left: 0; right: 0; background: rgba(17,24,39,0.95); backdrop-filter: blur(8px); overflow-y: auto; border-top-left-radius: 1rem; border-top-right-radius: 1rem; z-index: 10; transition: max-height 0.3s ease; }
+
+/* Map styling */
+#map {
+  height: calc(100vh - 56px);
+  z-index: 0;
+}
+
+/* Panel styling */
+.tab-panel {
+  position: absolute;
+  bottom: 56px;
+  left: 0;
+  right: 0;
+  background: rgba(17,24,39,0.95);
+  backdrop-filter: blur(8px);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  overflow-y: auto;
+  z-index: 10;
+  transition: max-height 0.3s ease;
+}
 .tab-panel.collapsed { max-height: 20vh; }
-.tab-panel.expanded { max-height: 60vh; }
-#panel-handle { z-index: 20; }
-.nav-btn.active svg, .nav-btn.active span { color: #3B82F6; }
-.nav-btn svg, .nav-btn span { color: #9CA3AF; }
-@keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.item { padding: 0.75rem; background: #1F2937; border-radius: 0.75rem; color: white; animation: popIn 0.3s ease-out forwards; opacity: 0; }
-input:focus { outline: none; border: 2px solid #3B82F6; }
+.tab-panel.expanded  { max-height: 60vh; }
+
+/* Slide Handle */
+#panel-handle {
+  cursor: pointer;
+}
+
+/* Nav styling */
+.nav-btn.active { color: #3B82F6; }
+.nav-btn { color: #9CA3AF; }
+
+/* List pop-in */
+@keyframes popIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.item {
+  padding: 0.75rem;
+  background: #1F2937;
+  border-radius: 0.75rem;
+  color: white;
+  opacity: 0;
+  animation: popIn 0.3s ease-out forwards;
+}
+
+/* Input focus */
+input:focus {
+  outline: none;
+  border: 2px solid #3B82F6;
+}
