@@ -1,51 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Canberra Trip Planner</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Manifest & iOS PWA -->
   <link rel="manifest" href="/manifest.json">
-  <link rel="stylesheet" href="/styles.css">
-  <!-- iOS PWA Support -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <link rel="stylesheet" href="/styles.css" />
 </head>
-<body>
-  <header class="header">
-    <h1>Canberra Trip Planner</h1>
+<body class="flex flex-col h-full">
+  <header class="bg-blue-600 text-white p-4 shadow-md flex items-center justify-between">
+    <h1 class="text-2xl font-semibold">Canberra Trip Planner</h1>
+    <button id="menu-toggle" class="md:hidden focus:outline-none">
+      <!-- simple hamburger -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
   </header>
 
-  <main class="container">
-    <section id="planner" class="panel">
-      <h2>Plan a Trip</h2>
-      <form id="trip-form">
-        <input id="from" type="text" placeholder="From (address or stop)" required>
-        <input id="to" type="text" placeholder="To (address or stop)" required>
-        <button type="submit">Plan Trip</button>
+  <div class="flex flex-1 overflow-hidden">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-white w-80 p-4 border-r hidden md:block md:animate-fadeIn">
+      <form id="trip-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium">From</label>
+          <input id="from" list="stops" type="text" class="mt-1 w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Address or stop" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">To</label>
+          <input id="to" list="stops" type="text" class="mt-1 w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Address or stop" required />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Departure</label>
+          <input id="datetime" type="datetime-local" class="mt-1 w-full p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 transition" />
+        </div>
+        <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition">Plan Trip</button>
       </form>
-      <div id="map" class="map"></div>
-      <ul id="itinerary" class="itinerary"></ul>
-    </section>
+      <hr class="my-4">
+      <h2 class="text-lg font-semibold mb-2">Itinerary</h2>
+      <ul id="itinerary" class="space-y-2"></ul>
+    </aside>
 
-    <section id="favorites" class="panel">
-      <h2>Favorites</h2>
-      <ul id="fav-list"></ul>
-      <button id="add-home">Set Home</button>
-      <button id="add-work">Set Work</button>
-      <button id="add-school">Set School</button>
-    </section>
-  </main>
+    <!-- Map -->
+    <div id="map" class="flex-1 relative">
+      <!-- Loader -->
+      <div id="loader" class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center hidden">
+        <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="stops"></datalist>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="/app.js"></script>
   <script>
     // Register Service Worker
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js');
-      });
+      navigator.serviceWorker.register('/service-worker.js');
     }
+    // Mobile menu toggle
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('hidden');
+    });
   </script>
 </body>
 </html>
