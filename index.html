@@ -4,28 +4,37 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Canberra Trip Planner</title>
+
+  <!-- Inter Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
   <link rel="manifest" href="/manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body class="flex flex-col h-full font-inter text-gray-200">
+
+  <!-- Map Container -->
   <div id="map" class="flex-1 w-full relative"></div>
 
-  <!-- Slide handle -->
-  <div id="panel-handle" class="absolute bottom-56 left-1/2 transform -translate-x-1/2 w-12 h-1.5 bg-gray-600 rounded-full cursor-pointer z-20"></div>
+  <!-- Slide Handle -->
+  <button id="panel-handle" aria-label="Expand panel" class="absolute bottom-56 left-1/2 transform -translate-x-1/2 w-12 h-1.5 bg-gray-600 rounded-full z-20 focus:outline-none"></button>
 
-  <!-- Panel: Plan & Live -->
+  <!-- Plan & Live Panel -->
   <div id="panel-plan" class="tab-panel collapsed">
     <div class="p-4 space-y-4">
       <div class="relative">
-        <input id="searchDest" placeholder="Where to?" class="w-full p-3 pr-12 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500" />
-        <button id="search-btn" class="absolute right-2 top-2 p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 16s1.5-2 4-2 4 2 4 2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
+        <input id="searchDest" placeholder="Where to?" class="w-full p-3 pr-12 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500 transition" />
+        <button id="search-btn" class="absolute right-2 top-2 p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition" aria-label="Search">
+          <!-- Search Icon -->
+          🔍
         </button>
       </div>
       <div id="route-options" class="space-y-2"></div>
@@ -33,17 +42,18 @@
     </div>
   </div>
 
+  <!-- Bottom Navigation -->
   <nav class="bg-gray-800 border-t border-gray-700 flex justify-around py-2 relative z-10">
-    <button id="nav-plan" class="nav-btn flex flex-col items-center focus:outline-none active">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 17v-2a4 4 0 018 0v2m-4-6a4 4 0 110-8 4 4 0 010 8z"/></svg>
-      <span class="text-xs">Plan</span>
+    <button id="nav-plan" class="nav-btn active flex flex-col items-center focus:outline-none" aria-label="Plan">
+      🗺️<span class="text-xs mt-1">Plan</span>
     </button>
-    <button id="nav-nearby" class="nav-btn flex flex-col items-center focus:outline-none">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17.657 16.657L13.414 12 17.657 7.343M6.343 6.343L10.586 10.586 6.343 14.829"/></svg>
-      <span class="text-xs">Nearby</span>
+    <button id="nav-nearby" class="nav-btn flex flex-col items-center focus:outline-none" aria-label="Nearby">
+      📍<span class="text-xs mt-1">Nearby</span>
     </button>
   </nav>
+
   <datalist id="stops"></datalist>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="/app.js"></script>
 </body>
