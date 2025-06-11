@@ -1,87 +1,97 @@
-// Initialize map
-const map = L.map('map').setView([-35.2809,149.1300],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(map);
-let routeLayer;
+// Map init with dark tiles
+const map = L.map('map').setView([-35.2809,149.1300],14);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; CartoDB & OpenStreetMap'
+}).addTo(map);
 
-// Load stops
-let stops = [];
-fetch('/data/stops.json').then(r=>r.json()).then(data=> stops=data);
-['from','to'].forEach(id=>{
-  const inp=document.getElementById(id);
-  inp.addEventListener('input', ()=>{
-    const list=document.getElementById('stops'); list.innerHTML='';
-    stops.filter(s=>s.name.toLowerCase().includes(inp.value.toLowerCase())).slice(0,5)
-      .forEach(s=>{ const opt=document.createElement('option'); opt.value=s.name; list.appendChild(opt); });
-  });
-});
+// User location marker
+let userMarker;
+navigator.geolocation.watchPosition(pos => {
+  const { latitude, longitude } = pos.coords;
+  if (!userMarker) {
+    userMarker = L.marker([latitude, longitude], { icon: L.icon({ iconUrl: '/icons/icon-192.png', iconSize: [32,32] }) }).addTo(map);
+  } else {
+    userMarker.setLatLng([latitude, longitude]);
+  }
+}, err => console.error(err));
+
+// Stop data
+let stops=[];
+fetch('/data/stops.json').then(r=>r.json()).then(d=>stops=d);
 
 // Tabs
-const tabs=['plan','nearby','live'];
+const tabs = ['plan','nearby'];
 tabs.forEach(tab=>{
-  document.querySelector(`button[data-tab="${tab}"]`).addEventListener('click', ()=>{
+  document.getElementById(`nav-${tab}`).addEventListener('click', ()=>{
     tabs.forEach(t=>{
-      document.getElementById(`tab-${t}`).classList.add('hidden');
-      document.querySelector(`button[data-tab="${t}"]`).classList.remove('active');
+      document.getElementById(`panel-${t}`).classList.add('hidden');
+      document.getElementById(`nav-${t}`).classList.remove('active');
     });
-    document.getElementById(`tab-${tab}`).classList.remove('hidden');
-    document.querySelector(`button[data-tab="${tab}"]`).classList.add('active');
+    document.getElementById(`panel-${tab}`).classList.remove('hidden');
+    document.getElementById(`nav-${tab}`).classList.add('active');
   });
 });
-// Activate default
-document.querySelector('button[data-tab="plan"]').click();
+// Default
+document.getElementById('nav-plan').click();
 
-// Now button
-document.getElementById('now-btn').addEventListener('click', ()=>{
-  document.getElementById('datetime').value = new Date().toISOString().slice(0,16);
-});
-
-// Plan trip
-document.getElementById('plan-btn').addEventListener('click', async ()=>{
-  const from=document.getElementById('from').value;
-  const to=document.getElementById('to').value;
-  const time=document.getElementById('datetime').value || new Date().toISOString();
-  const res=await fetch(`/api/plan?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&time=${encodeURIComponent(time)}`);
-  const plan=await res.json();
-  showItinerary(plan);
-});
-function showItinerary(plan){
-  const ul=document.getElementById('itinerary'); ul.innerHTML=''; if(routeLayer) map.removeLayer(routeLayer);
-  let coords=[];
-  plan.legs.forEach((leg,i)=>{
-    coords.push(...leg.geometry.coordinates.map(c=>[c[1],c[0]]));
-    const li=document.createElement('li'); li.className='itinerary-item';
-    li.style.animationDelay=`${i*0.1}s`;
-    li.textContent = `${leg.mode}: ${leg.from.name} → ${leg.to.name} (${leg.duration}m)`;
-    ul.appendChild(li);
+// Search destination suggestions
+const destInput = document.getElementById('searchDest');
+destInput.addEventListener('input', ()=>{
+  const val = destInput.value.toLowerCase();
+  const suggestions = stops.filter(s=>s.name.toLowerCase().includes(val)).slice(0,5);
+  const opts = suggestions.map(s=>`<li class="item" data-lat="${s.lat}" data-lon="${s.lon}">${s.name}</li>`).join('');
+  document.getElementById('route-options').innerHTML = `<ul>${opts}</ul>`;
+  document.querySelectorAll('#route-options li').forEach(el=>{
+    el.addEventListener('click', ()=> selectDestination(el));
   });
-  routeLayer=L.polyline(coords,{color:'#3B82F6',weight:4,opacity:0.8}).addTo(map);
-  map.fitBounds(routeLayer.getBounds(),{padding:[20,20]});
+});
+
+let selectedDest;
+function selectDestination(el) {
+  selectedDest = { name: el.textContent, lat: el.dataset.lat, lon: el.dataset.lon };
+  showRouteOptions(selectedDest);
+}
+
+async function showRouteOptions(dest) {
+  // Assume API returns several route choices
+  const res = await fetch(`/api/routes?to=${encodeURIComponent(dest.name)}`);
+  const routes = await res.json();
+  const html = routes.map((r,i)=>
+    `<li class="item" data-idx="${i}">${r.summary} (${r.duration}m)</li>`
+  ).join('');
+  document.getElementById('route-options').innerHTML = `<ul>${html}</ul>`;
+  document.querySelectorAll('#route-options li').forEach(el=> el.addEventListener('click', ()=> startLive(routes[el.dataset.idx])));
+}
+
+function startLive(route) {
+  // Draw route
+  if (window.routeLayer) map.removeLayer(window.routeLayer);
+  const coords = route.legs.flatMap(l=> l.geometry.coordinates.map(c=>[c[1],c[0]]));
+  window.routeLayer = L.polyline(coords,{color:'#3B82F6',weight:4,opacity:0.8}).addTo(map);
+  map.fitBounds(window.routeLayer.getBounds(),{padding:[20,20]});
+  // Show live steps
+  document.getElementById('start-live').classList.remove('hidden');
+  document.getElementById('start-live').onclick = () => liveGuide(route.steps);
+}
+
+function liveGuide(steps) {
+  Notification.requestPermission();
+  steps.forEach((s,i)=>{
+    setTimeout(()=>{
+      new Notification('Next step', { body: s.instruction });
+      // also display on panel
+      const ul = document.getElementById('route-options'); ul.innerHTML = '';
+      ul.innerHTML = steps.map((st,j)=> `<li class="item" style="animation-delay:${j*0.1}s">${st.instruction}</li>`).join('');
+    }, i * 15000);
+  });
 }
 
 // Nearby stops
-async function showNearby(){
+async function showNearbyStops() {
   const pos = await new Promise(r=>navigator.geolocation.getCurrentPosition(p=>r(p.coords)));
-  stops.sort((a,b)=> getDistance(pos,a) - getDistance(pos,b));
-  const ul=document.getElementById('nearby-stops'); ul.innerHTML='';
-  stops.slice(0,5).forEach((s,i)=>{
-    const li=document.createElement('li'); li.className='nearby-item';
-    li.style.animationDelay=`${i*0.1}s`;
-    li.textContent = `${s.name} (${getDistance(pos,s).toFixed(2)} km)`;
-    ul.appendChild(li);
-    L.circleMarker([s.lat,s.lon],{radius:6,color:'#60A5FA'}).addTo(map);
-  });
+  stops.sort((a,b)=> dist(pos,a)-dist(pos,b));
+  const html = stops.slice(0,5).map((s,i)=>`<li class="item">${s.name} (${dist(pos,s).toFixed(2)}km)</li>`).join('');
+  document.getElementById('nearby-stops').innerHTML = html;
 }
-function getDistance(pos,stop){ const R=6371; const dLat=(stop.lat-pos.latitude)*Math.PI/180; const dLon=(stop.lon-pos.longitude)*Math.PI/180; const a=Math.sin(dLat/2)**2+Math.cos(pos.latitude*Math.PI/180)*Math.cos(stop.lat*Math.PI/180)*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(a)); }
-
-// Live stub
-document.getElementById('tab-live').addEventListener('show', ()=>{});
-function showLive(steps){
-  document.querySelector('button[data-tab="live"]').click();
-  const ul=document.getElementById('live-steps'); ul.innerHTML='';
-  steps.forEach((s,i)=>{
-    const li=document.createElement('li'); li.className='live-item';
-    li.style.animationDelay=`${i*0.1}s`;
-    li.textContent = s.instruction;
-    ul.appendChild(li);
-  });
-}
+function dist(pos,s){ const R=6371; const dLat=(s.lat-pos.latitude)*Math.PI/180; const dLon=(s.lon-pos.longitude)*Math.PI/180; const a=Math.sin(dLat/2)**2+Math.cos(pos.latitude*Math.PI/180)*Math.cos(s.lat*Math.PI/180)*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(a)); }
+showNearbyStops();
