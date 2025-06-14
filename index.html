@@ -1,60 +1,33 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-900">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Canberra Trip Planner</title>
-
-  <!-- Inter Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Leaflet CSS -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Canberra Transit Planner</title>
+  <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-
-  <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="flex flex-col h-full font-inter text-gray-200">
+<body>
+  <div class="app">
+    <div class="glass-card controls">
+      <h1>Canberra Trip Planner</h1>
+      <form id="tripForm">
+        <input type="text" id="from" placeholder="From address or stop..." required />
+        <input type="text" id="to" placeholder="To address or stop..." required />
+        <button type="submit">Plan Trip</button>
+      </form>
+    </div>
 
-  <!-- Map Container -->
-  <div id="map" class="flex-1 w-full relative"></div>
+    <div class="glass-card map-container" id="map"></div>
 
-  <!-- Slide Handle -->
-  <button id="panel-handle" aria-label="Expand panel" class="absolute bottom-56 left-1/2 transform -translate-x-1/2 w-12 h-1.5 bg-gray-600 rounded-full z-20 focus:outline-none"></button>
-
-  <!-- Plan & Live Panel -->
-  <div id="panel-plan" class="tab-panel collapsed">
-    <div class="p-4 space-y-4">
-      <div class="relative">
-        <input id="searchDest" placeholder="Where to?" class="w-full p-3 pr-12 rounded-xl bg-gray-800 focus:ring-2 focus:ring-blue-500 transition" />
-        <button id="search-btn" class="absolute right-2 top-2 p-2 bg-blue-600 rounded-full hover:bg-blue-700 transition" aria-label="Search">
-          <!-- Search Icon -->
-          🔍
-        </button>
-      </div>
-      <div id="route-options" class="space-y-2"></div>
-      <button id="start-live" class="hidden w-full py-3 bg-green-600 rounded-xl shadow-lg hover:bg-green-700 transition">Start Trip</button>
+    <div class="glass-card results" id="results">
+      <h2>Trip Results</h2>
+      <div id="tripResults"></div>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
-  <nav class="bg-gray-800 border-t border-gray-700 flex justify-around py-2 relative z-10">
-    <button id="nav-plan" class="nav-btn active flex flex-col items-center focus:outline-none" aria-label="Plan">
-      🗺️<span class="text-xs mt-1">Plan</span>
-    </button>
-    <button id="nav-nearby" class="nav-btn flex flex-col items-center focus:outline-none" aria-label="Nearby">
-      📍<span class="text-xs mt-1">Nearby</span>
-    </button>
-  </nav>
-
-  <datalist id="stops"></datalist>
-
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="/app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
