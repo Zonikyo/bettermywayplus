@@ -2,48 +2,39 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#121212" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <title>TripGo Canberra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MyWay+ Trip Planner</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="icon.png" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-  <div id="app">
-    <!-- Map Background -->
-    <div id="map-container"></div>
+  <div id="map-container"></div>
 
-    <!-- Search and Control Panel -->
-    <div class="panel">
-      <div class="search-bar">
-        <input
-          type="text"
-          id="destination-input"
-          placeholder="Search for destination"
-          autocomplete="off"
-        />
-        <button id="plan-btn">➤</button>
-      </div>
-
-      <div class="quick-links">
-        <div class="quick-link" onclick="setFavorite('home')">🏠 Add Home</div>
-        <div class="quick-link" onclick="setFavorite('work')">💼 Add Work</div>
-        <div class="quick-link">⚙️ Customise Home</div>
-        <div class="quick-link">👤 Profile</div>
-      </div>
+  <div id="nav-panel">
+    <div class="search-bar">
+      <i class="fas fa-location-dot"></i>
+      <input id="destination-input" placeholder="Where to?" autocomplete="off"/>
+      <button id="plan-btn"><i class="fas fa-route"></i></button>
     </div>
-
-    <!-- Trip Options Screen (initially hidden) -->
-    <div id="trip-screen" class="hidden">
-      <button class="back-btn" onclick="closeTripScreen()">← Back</button>
-      <h2>Trip Options</h2>
-      <ul id="trip-options"></ul>
+    <div class="quick-links">
+      <div class="quick-link"><i class="fas fa-home"></i> Add Home</div>
+      <div class="quick-link"><i class="fas fa-briefcase"></i> Add Work</div>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <div id="trip-screen" class="hidden">
+    <div id="trip-header">
+      <span>Trip Options</span>
+      <button onclick="document.getElementById('trip-screen').classList.add('hidden')"><i class="fas fa-times"></i></button>
+    </div>
+    <ul id="trip-options"></ul>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
