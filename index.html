@@ -19,11 +19,15 @@
     <div class="search-bar">
       <i class="fas fa-location-dot"></i>
       <input id="destination-input" placeholder="Where to?" autocomplete="off"/>
-      <button id="plan-btn"><i class="fas fa-route"></i></button>
+      <button id="plan-btn" title="Plan Trip"><i class="fas fa-arrow-right"></i></button>
     </div>
     <div class="quick-links">
-      <div class="quick-link"><i class="fas fa-home"></i> Add Home</div>
-      <div class="quick-link"><i class="fas fa-briefcase"></i> Add Work</div>
+      <div class="quick-link" id="set-home"><i class="fas fa-home"></i> Add Home</div>
+      <div class="quick-link" id="set-work"><i class="fas fa-briefcase"></i> Add Work</div>
+    </div>
+    <div id="nearby-stops">
+      <strong>Nearby Stops:</strong>
+      <ul id="stops-list"></ul>
     </div>
   </div>
 
