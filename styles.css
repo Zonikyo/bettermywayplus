@@ -18,7 +18,7 @@ body {
   position: fixed;
   bottom: 0;
   width: 100%;
-  background: rgba(30, 30, 30, 0.9);
+  background: rgba(30, 30, 30, 0.95);
   backdrop-filter: blur(12px);
   padding: 1rem;
   z-index: 999;
@@ -26,6 +26,8 @@ body {
   flex-direction: column;
   gap: 0.75rem;
   border-top: 1px solid #333;
+  max-height: 45%;
+  overflow-y: auto;
 }
 
 .search-bar {
@@ -46,10 +48,11 @@ body {
 .search-bar button {
   background: #00c853;
   border: none;
-  padding: 0.75rem;
+  padding: 0.75rem 1rem;
   border-radius: 10px;
   color: #fff;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .quick-links {
@@ -112,6 +115,8 @@ body {
   border-radius: 10px;
   z-index: 9999;
   box-shadow: 0 0 10px #000;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
 #autocomplete div {
@@ -121,4 +126,20 @@ body {
 
 #autocomplete div:hover {
   background: #333;
+}
+
+#nearby-stops {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-top: 0.5rem;
+}
+
+#stops-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0 0 1rem;
+}
+
+#stops-list li {
+  padding: 0.25rem 0;
 }
