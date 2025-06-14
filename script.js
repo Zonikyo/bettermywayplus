@@ -1,71 +1,76 @@
-// script.js
 const API_KEY = '12f16e0e9e72b49e496279d8230b0fec';
-const map = L.map('map').setView([-35.2809, 149.13], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-let vehicleMarkers = [];
+let userLocation = null;
 
-document.getElementById('tripForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const from = document.getElementById('from').value;
-  const to = document.getElementById('to').value;
+navigator.geolocation.getCurrentPosition(async pos => {
+  userLocation = {
+    lat: pos.coords.latitude,
+    lon: pos.coords.longitude
+  };
+  fetchNearby();
+}, () => alert("Location permission denied. Cannot load nearby stops."));
 
-  const tripResponse = await fetch(`https://tripgo.skedgo.com/v1/routing.json?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&region=au_canberra&locale=en&realtime=true`, {
-    headers: {
-      'Accept': 'application/json',
-      'X-TripGo-Key': API_KEY
-    }
+document.getElementById('to').addEventListener('input', async (e) => {
+  const query = e.target.value;
+  if (query.length < 3) return document.getElementById('autocomplete').innerHTML = "";
+
+  const res = await fetch(`https://tripgo.skedgo.com/v1/places.json?query=${encodeURIComponent(query)}&location=${userLocation.lat},${userLocation.lon}&region=au_canberra`, {
+    headers: { 'X-TripGo-Key': API_KEY }
   });
-
-  const data = await tripResponse.json();
-  displayTrips(data.suggestions[0]?.trips || []);
+  const data = await res.json();
+  const results = data.places;
+  const list = document.getElementById('autocomplete');
+  list.innerHTML = "";
+  results.forEach(place => {
+    const li = document.createElement('li');
+    li.textContent = place.name;
+    li.onclick = () => {
+      document.getElementById('to').value = place.name;
+      list.innerHTML = "";
+    };
+    list.appendChild(li);
+  });
 });
 
-function displayTrips(trips) {
-  const results = document.getElementById('tripResults');
-  results.innerHTML = '';
-  if (!trips.length) return results.innerHTML = '<p>No trips found.</p>';
+async function fetchNearby() {
+  const stopsRes = await fetch(`https://tripgo.skedgo.com/v1/publictransport/stops_nearby?location=${userLocation.lat},${userLocation.lon}&region=au_canberra`, {
+    headers: { 'X-TripGo-Key': API_KEY }
+  });
+  const stops = await stopsRes.json();
+  document.getElementById('stopsList').innerHTML = stops.stops.slice(0, 5).map(s => `<li>${s.name}</li>`).join('');
 
+  const routesRes = await fetch(`https://tripgo.skedgo.com/v1/publictransport/routes_nearby?location=${userLocation.lat},${userLocation.lon}&region=au_canberra`, {
+    headers: { 'X-TripGo-Key': API_KEY }
+  });
+  const routes = await routesRes.json();
+  document.getElementById('routesList').innerHTML = routes.routes.slice(0, 5).map(r => `<li>${r.name}</li>`).join('');
+}
+
+async function planTrip() {
+  const to = document.getElementById('to').value;
+  if (!userLocation) return alert("Still determining your location...");
+
+  const res = await fetch(`https://tripgo.skedgo.com/v1/routing.json?from=${userLocation.lat},${userLocation.lon}&to=${encodeURIComponent(to)}&region=au_canberra&realtime=true`, {
+    headers: { 'X-TripGo-Key': API_KEY }
+  });
+  const data = await res.json();
+  const trips = data.suggestions[0]?.trips || [];
+
+  document.getElementById('home').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  const resultDiv = document.getElementById('tripResults');
+  resultDiv.innerHTML = '';
   trips.forEach(trip => {
-    const segments = trip.segments.map(seg => seg.transportMode ? `<li>${seg.transportMode} from ${seg.startTime}</li>` : '').join('');
-    const tripEl = document.createElement('div');
-    tripEl.innerHTML = `<ul>${segments}</ul>`;
-    results.appendChild(tripEl);
+    const segments = trip.segments.map(s =>
+      `<li>${s.transportMode || 'Walk'} - ${s.startTime} → ${s.endTime}</li>`
+    ).join('');
+    const card = document.createElement('div');
+    card.innerHTML = `<ul>${segments}</ul>`;
+    resultDiv.appendChild(card);
   });
 }
 
-async function fetchLiveVehicles() {
-  try {
-    const res = await fetch('https://tripgo.skedgo.com/v1/publictransport/vehicle_locations?region=au_canberra', {
-      headers: {
-        'Accept': 'application/json',
-        'X-TripGo-Key': API_KEY
-      }
-    });
-
-    const data = await res.json();
-    updateVehicleMarkers(data.vehicles || []);
-  } catch (err) {
-    console.error('Failed to fetch vehicle locations', err);
-  }
+function goBack() {
+  document.getElementById('home').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
 }
-
-function updateVehicleMarkers(vehicles) {
-  vehicleMarkers.forEach(m => map.removeLayer(m));
-  vehicleMarkers = [];
-
-  vehicles.forEach(vehicle => {
-    if (!vehicle.location) return;
-    const marker = L.circleMarker([vehicle.location.lat, vehicle.location.lon], {
-      radius: 6,
-      fillColor: 'red',
-      color: 'white',
-      fillOpacity: 0.9
-    }).bindPopup(`Vehicle ID: ${vehicle.id}`);
-    marker.addTo(map);
-    vehicleMarkers.push(marker);
-  });
-}
-
-// Refresh vehicle data every 30s
-fetchLiveVehicles();
-setInterval(fetchLiveVehicles, 30000);
