@@ -2,34 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Canberra Transit</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#121212" />
+  <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icon.png" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <title>TripGo Canberra</title>
 </head>
 <body>
-  <div class="glass-card" id="home">
-    <h2>Where are you going?</h2>
-    <input type="text" id="to" placeholder="Enter a destination..." autocomplete="off"/>
-    <ul id="autocomplete"></ul>
-    <button onclick="planTrip()">Plan My Trip</button>
-    <div id="nearby">
-      <h3>Nearby Stops</h3>
-      <ul id="stopsList"></ul>
-      <h3>Nearby Routes</h3>
-      <ul id="routesList"></ul>
+  <div id="app">
+    <!-- Map Background -->
+    <div id="map-container"></div>
+
+    <!-- Search and Control Panel -->
+    <div class="panel">
+      <div class="search-bar">
+        <input
+          type="text"
+          id="destination-input"
+          placeholder="Search for destination"
+          autocomplete="off"
+        />
+        <button id="plan-btn">➤</button>
+      </div>
+
+      <div class="quick-links">
+        <div class="quick-link" onclick="setFavorite('home')">🏠 Add Home</div>
+        <div class="quick-link" onclick="setFavorite('work')">💼 Add Work</div>
+        <div class="quick-link">⚙️ Customise Home</div>
+        <div class="quick-link">👤 Profile</div>
+      </div>
+    </div>
+
+    <!-- Trip Options Screen (initially hidden) -->
+    <div id="trip-screen" class="hidden">
+      <button class="back-btn" onclick="closeTripScreen()">← Back</button>
+      <h2>Trip Options</h2>
+      <ul id="trip-options"></ul>
     </div>
   </div>
 
-  <div class="glass-card" id="results" style="display:none">
-    <button onclick="goBack()">← Back</button>
-    <h2>Trip Options</h2>
-    <div id="tripResults"></div>
-  </div>
-
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="script.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
