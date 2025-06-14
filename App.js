@@ -1,109 +1,108 @@
-const API_KEY = '12f16e0e9e72b49e496279d8230b0fec';
-const REGION = 'au'; // Using Australia
-let userCoords = null;
+const API_KEY = "12f16e0e9e72b49e496279d8230b0fec";
+const REGION = "au-act";
+const AUTOCOMPLETE_URL = `https://tripgo.skedgo.com/v1/places.json`;
+const ROUTING_URL = `https://tripgo.skedgo.com/v1/routing.json`;
 
-// Leaflet Map Setup
-const map = L.map('map-container').setView([-35.2809, 149.1300], 14); // Default to Canberra
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
+const map = L.map("map-container", {
+  zoomControl: false,
+  attributionControl: false
+}).setView([-35.2809, 149.13], 14);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  subdomains: 'abcd',
+  maxZoom: 19
 }).addTo(map);
 
-// Location Marker
-let userMarker = null;
+// Add custom location button
+L.control.zoom({ position: 'topright' }).addTo(map);
+const locateBtn = L.control({ position: 'topright' });
+locateBtn.onAdd = () => {
+  const btn = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+  btn.innerHTML = '<i class="fas fa-location-crosshairs" style="padding:10px;"></i>';
+  btn.style.backgroundColor = "#333";
+  btn.style.cursor = "pointer";
+  btn.onclick = () => map.locate({ setView: true, maxZoom: 16 });
+  return btn;
+};
+locateBtn.addTo(map);
 
-navigator.geolocation.getCurrentPosition(async (pos) => {
-  userCoords = [pos.coords.latitude, pos.coords.longitude];
-  map.setView(userCoords, 15);
-  userMarker = L.marker(userCoords).addTo(map).bindPopup('You are here').openPopup();
-  await loadNearbyStops(userCoords);
-}, () => {
-  alert("Location access denied. App may not work properly.");
+let userCoords = null;
+
+map.on("locationfound", (e) => {
+  userCoords = [e.latitude, e.longitude];
+  L.marker(userCoords).addTo(map).bindPopup("You are here").openPopup();
+  showNearbyStops();
 });
 
-// DOM Elements
-const input = document.getElementById("destination-input");
+map.on("locationerror", () => {
+  alert("Unable to access your location.");
+});
+
+// Try to get user location at startup
+map.locate({ setView: true, maxZoom: 16 });
+
+const destinationInput = document.getElementById("destination-input");
 const planBtn = document.getElementById("plan-btn");
 const tripScreen = document.getElementById("trip-screen");
 const tripList = document.getElementById("trip-options");
 
-// Debounced Suggestion Fetcher
-let debounceTimeout;
-input.addEventListener("input", (e) => {
-  const query = e.target.value.trim();
-  if (debounceTimeout) clearTimeout(debounceTimeout);
-  debounceTimeout = setTimeout(() => {
-    if (query.length >= 2) fetchSuggestions(query);
-  }, 300);
-});
+// Autocomplete destinations
+destinationInput.addEventListener("input", async (e) => {
+  const query = e.target.value;
+  if (query.length < 3) return;
 
-// Search and Plan Button
-planBtn.addEventListener("click", () => {
-  const dest = input.value;
-  if (!dest || !userCoords) return;
-  planTrip(dest);
-});
-
-// Fetch Suggestions
-async function fetchSuggestions(query) {
-  const url = `https://tripgo.skedgo.com/v1/locations?term=${encodeURIComponent(query)}&region=${REGION}`;
-  const res = await fetch(url, {
-    headers: { 'Authorization': API_KEY }
+  const res = await fetch(`${AUTOCOMPLETE_URL}?region=${REGION}&text=${encodeURIComponent(query)}`, {
+    headers: { Authorization: API_KEY }
   });
   const data = await res.json();
-  showAutoComplete(data);
-}
 
-function showAutoComplete(locations) {
-  // Simple dropdown (can be replaced with a proper dropdown plugin)
-  let dropdown = document.getElementById("autocomplete");
-  if (dropdown) dropdown.remove();
+  // Remove old suggestions
+  let ac = document.getElementById("autocomplete");
+  if (ac) ac.remove();
 
-  dropdown = document.createElement("div");
-  dropdown.id = "autocomplete";
-  dropdown.style.position = "absolute";
-  dropdown.style.background = "#1e1e1e";
-  dropdown.style.borderRadius = "10px";
-  dropdown.style.top = input.getBoundingClientRect().bottom + "px";
-  dropdown.style.left = input.getBoundingClientRect().left + "px";
-  dropdown.style.width = input.offsetWidth + "px";
-  dropdown.style.zIndex = 1000;
-  dropdown.style.color = "#fff";
-
-  locations.forEach(loc => {
-    const option = document.createElement("div");
-    option.innerText = loc.name;
-    option.style.padding = "0.5rem";
-    option.style.cursor = "pointer";
-    option.addEventListener("click", () => {
-      input.value = loc.name;
-      dropdown.remove();
-      planTrip(loc);
-    });
-    dropdown.appendChild(option);
+  const container = document.createElement("div");
+  container.id = "autocomplete";
+  data.places.slice(0, 5).forEach(place => {
+    const div = document.createElement("div");
+    div.textContent = place.name;
+    div.onclick = () => {
+      destinationInput.value = place.name;
+      container.remove();
+      planTrip(place);
+    };
+    container.appendChild(div);
   });
 
-  document.body.appendChild(dropdown);
+  destinationInput.parentNode.appendChild(container);
+});
+
+// Trip Planning
+planBtn.addEventListener("click", () => {
+  const input = destinationInput.value;
+  if (!input || !userCoords) return;
+  resolveAddress(input).then(place => planTrip(place));
+});
+
+async function resolveAddress(address) {
+  const res = await fetch(`${AUTOCOMPLETE_URL}?region=${REGION}&text=${encodeURIComponent(address)}`, {
+    headers: { Authorization: API_KEY }
+  });
+  const data = await res.json();
+  return data.places[0];
 }
 
-// Plan Trip
-async function planTrip(destination) {
-  const origin = { lat: userCoords[0], lon: userCoords[1] };
-  const destinationLocation = typeof destination === 'string'
-    ? await resolveAddress(destination)
-    : { lat: destination.lat, lon: destination.lon };
-
-  const url = `https://tripgo.skedgo.com/v1/routing.json?fromLat=${origin.lat}&fromLon=${origin.lon}&toLat=${destinationLocation.lat}&toLon=${destinationLocation.lon}&region=${REGION}`;
+async function planTrip(destinationPlace) {
+  const url = `${ROUTING_URL}?fromLat=${userCoords[0]}&fromLon=${userCoords[1]}&toLat=${destinationPlace.lat}&toLon=${destinationPlace.lon}&region=${REGION}`;
   const res = await fetch(url, {
-    headers: { 'Authorization': API_KEY }
+    headers: { Authorization: API_KEY }
   });
   const data = await res.json();
   displayTrips(data);
 }
 
-// Display Trip Options
 function displayTrips(tripData) {
   tripScreen.classList.remove("hidden");
-  tripList.innerHTML = '';
+  tripList.innerHTML = "";
 
   if (!tripData.itineraries || tripData.itineraries.length === 0) {
     tripList.innerHTML = "<li>No routes found.</li>";
@@ -113,39 +112,27 @@ function displayTrips(tripData) {
   tripData.itineraries.forEach((itinerary) => {
     const li = document.createElement("li");
     const summary = itinerary.legs.map(l => l.transportation.mode).join(" → ");
-    li.innerHTML = `<strong>${summary}</strong><br>${itinerary.legs.length} steps - ${(itinerary.duration / 60).toFixed(0)} mins`;
+    li.innerHTML = `<strong>${summary}</strong><br>${itinerary.legs.length} steps · ${(itinerary.duration / 60).toFixed(0)} mins`;
     tripList.appendChild(li);
   });
 }
 
-// Close trip screen
-function closeTripScreen() {
-  tripScreen.classList.add("hidden");
-}
+// Show nearby stops
+async function showNearbyStops() {
+  if (!userCoords) return;
 
-// Resolve string address to lat/lon
-async function resolveAddress(address) {
-  const url = `https://tripgo.skedgo.com/v1/locations?term=${encodeURIComponent(address)}&region=${REGION}`;
-  const res = await fetch(url, {
-    headers: { 'Authorization': API_KEY }
+  const res = await fetch(`https://tripgo.skedgo.com/v1/stops/byLatLon.json?lat=${userCoords[0]}&lon=${userCoords[1]}&region=${REGION}`, {
+    headers: { Authorization: API_KEY }
   });
   const data = await res.json();
-  if (!data[0]) throw new Error("Destination not found.");
-  return { lat: data[0].lat, lon: data[0].lon };
-}
 
-// Show nearby stops on the map
-async function loadNearbyStops(coords) {
-  const [lat, lon] = coords;
-  const url = `https://tripgo.skedgo.com/v1/locations/nearby?lat=${lat}&lon=${lon}&types=stop`;
-  const res = await fetch(url, {
-    headers: { 'Authorization': API_KEY }
-  });
-  const stops = await res.json();
-  stops.forEach(stop => {
-    L.circleMarker([stop.lat, stop.lon], {
-      color: '#00c853',
-      radius: 5
-    }).addTo(map).bindPopup(stop.name);
+  data.stops.slice(0, 5).forEach(stop => {
+    const marker = L.circleMarker([stop.lat, stop.lon], {
+      radius: 6,
+      color: "#00c853",
+      fillColor: "#00c853",
+      fillOpacity: 0.7
+    }).addTo(map);
+    marker.bindPopup(`<strong>${stop.name}</strong><br>${stop.code}`);
   });
 }
