@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canberra Transit</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-bus"></i> Canberra Transit</h1>
+    </header>
+    
+    <div class="search-box">
+      <div class="input-group">
+        <i class="fas fa-location-dot"></i>
+        <input type="text" id="start" placeholder="Current location" readonly>
+        <button id="locate"><i class="fas fa-location-crosshairs"></i></button>
+      </div>
+      
+      <div class="input-group">
+        <i class="fas fa-flag"></i>
+        <input type="text" id="end" placeholder="Where to?">
+      </div>
+      
+      <button id="search-btn">Get Directions</button>
+    </div>
+    
+    <div class="results">
+      <div id="loading" class="hidden">
+        <div class="loader"></div>
+        <p>Finding best routes...</p>
+      </div>
+      <div id="error" class="hidden"></div>
+      <div id="directions"></div>
+    </div>
+  </div>
+  
+  <script>
+    // DOM Elements
+    const startInput = document.getElementById('start')
+    const endInput = document.getElementById('end')
+    const locateBtn = document.getElementById('locate')
+    const searchBtn = document.getElementById('search-btn')
+    const directionsEl = document.getElementById('directions')
+    const loadingEl = document.getElementById('loading')
+    const errorEl = document.getElementById('error')
+
+    // Get user location
+    locateBtn.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showError("Geolocation not supported")
+        return
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          startInput.value = `${position.coords.latitude},${position.coords.longitude}`
+        },
+        error => {
+          showError(`Location error: ${error.message}`)
+        }
+      )
+    })
+
+    // Get directions
+    searchBtn.addEventListener('click', async () => {
+      if (!startInput.value || !endInput.value) {
+        showError("Please enter start and end locations")
+        return
+      }
+      
+      try {
+        showLoading(true)
+        directionsEl.innerHTML = ''
+        
+        const response = await fetch(
+          `/api/directions?from=${startInput.value}&to=${endInput.value}`
+        )
+        
+        if (!response.ok) throw new Error('Failed to get directions')
+        
+        const segments = await response.json()
+        renderDirections(segments)
+      } catch (error) {
+        showError(error.message)
+      } finally {
+        showLoading(false)
+      }
+    })
+
+    // Render directions
+    function renderDirections(segments) {
+      let html = '<div class="steps">'
+      
+      segments.forEach(segment => {
+        html += `
+          <div class="step">
+            <div class="step-header">
+              <div class="mode-icon ${segment.mode}">
+                ${getModeIcon(segment.mode)}
+              </div>
+              <div>
+                <h3>${segment.instruction}</h3>
+                <p>${formatTime(segment.startTime)} → ${formatTime(segment.endTime)}</p>
+              </div>
+            </div>
+            
+            <div class="step-details">
+              <p><i class="fas fa-map-pin"></i> ${segment.from} → ${segment.to}</p>
+              ${segment.vehicle ? `<p><i class="fas fa-bus"></i> ${segment.vehicle}</p>` : ''}
+              ${segment.stops ? `<p><i class="fas fa-road"></i> ${segment.stops} stops</p>` : ''}
+              ${segment.occupancy ? `<p><i class="fas fa-users"></i> Crowding: ${getCrowdingIcon(segment.occupancy)}</p>` : ''}
+              ${segment.realTime ? `<p class="realtime"><i class="fas fa-circle-dot"></i> Live tracking</p>` : ''}
+            </div>
+          </div>
+        `
+      })
+      
+      html += '</div>'
+      directionsEl.innerHTML = html
+    }
+
+    // Helper functions
+    function getModeIcon(mode) {
+      return {
+        'wa': '<i class="fas fa-person-walking"></i>',
+        'pt': '<i class="fas fa-bus"></i>',
+        'rail': '<i class="fas fa-train"></i>'
+      }[mode] || '<i class="fas fa-route"></i>'
+    }
+    
+    function getCrowdingIcon(level) {
+      return {
+        'low': '<span class="low">Low <i class="fas fa-circle"></i></span>',
+        'medium': '<span class="medium">Medium <i class="fas fa-circle"></i></span>',
+        'high': '<span class="high">High <i class="fas fa-circle"></i></span>'
+      }[level] || level
+    }
+    
+    function formatTime(isoString) {
+      return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+    
+    function showLoading(show) {
+      loadingEl.classList.toggle('hidden', !show)
+    }
+    
+    function showError(message) {
+      errorEl.textContent = message
+      errorEl.classList.remove('hidden')
+      setTimeout(() => errorEl.classList.add('hidden'), 5000)
+    }
+  </script>
+</body>
+</html>
