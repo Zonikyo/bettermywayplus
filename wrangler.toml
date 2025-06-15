@@ -1,5 +1,9 @@
+name = "canberra-transit-guide"
 type = "javascript"
+account_id = "<YOUR_ACCOUNT_ID>"
 workers_dev = true
+route = ""
+zone_id = ""
 
 # Assets (static files) will be uploaded to KV via `wrangler publish`
 [site]
