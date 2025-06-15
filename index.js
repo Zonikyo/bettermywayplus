@@ -1,4 +1,4 @@
-// index.js - Cloudflare Worker handling both frontend and backend
+// index.js - Cloudflare Worker with Autocomplete Feature
 const TRIPGO_API_KEY = "12f16e0e9e72b49e496279d8230b0fec";
 
 addEventListener('fetch', event => {
@@ -42,6 +42,31 @@ async function handleRequest(request) {
     });
   }
   
+  // Autocomplete API Endpoint
+  if (url.pathname === '/api/autocomplete') {
+    const query = url.searchParams.get('q');
+    const apiUrl = `https://api.tripgo.com/v1/locations.json?q=${encodeURIComponent(query)}&v=11`;
+    
+    const response = await fetch(apiUrl, {
+      headers: { 'X-TripGo-Key': TRIPGO_API_KEY }
+    });
+    
+    if (!response.ok) return new Response('Autocomplete error', { status: 500 });
+    
+    const data = await response.json();
+    const suggestions = data.locations.map(loc => ({
+      name: loc.name,
+      coords: `${loc.lat},${loc.lng}`
+    }));
+    
+    return new Response(JSON.stringify(suggestions), {
+      headers: { 
+        'Content-Type': 'application/json',
+        'Cache-Control': 'max-age=3600'
+      }
+    });
+  }
+  
   return new Response('Not found', { status: 404 });
 }
 
@@ -72,7 +97,7 @@ function getInstruction(segment) {
   }
 }
 
-// Embedded HTML Content
+// Embedded HTML Content with Autocomplete Feature
 const HTML_CONTENT = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -97,7 +122,8 @@ const HTML_CONTENT = `<!DOCTYPE html>
       
       <div class="input-group">
         <i class="fas fa-flag"></i>
-        <input type="text" id="end" placeholder="Where to?">
+        <input type="text" id="end" placeholder="Where to?" autocomplete="off">
+        <div id="autocomplete-results" class="autocomplete-results"></div>
       </div>
       
       <button id="search-btn">Get Directions</button>
@@ -122,6 +148,10 @@ const HTML_CONTENT = `<!DOCTYPE html>
     const directionsEl = document.getElementById('directions');
     const loadingEl = document.getElementById('loading');
     const errorEl = document.getElementById('error');
+    const autocompleteResults = document.getElementById('autocomplete-results');
+    
+    // Store selected destination
+    let selectedDestination = null;
 
     // Get user location
     locateBtn.addEventListener('click', () => {
@@ -140,10 +170,75 @@ const HTML_CONTENT = `<!DOCTYPE html>
       );
     });
 
+    // Autocomplete functionality
+    endInput.addEventListener('input', debounce(async () => {
+      const query = endInput.value.trim();
+      
+      if (query.length < 3) {
+        autocompleteResults.innerHTML = '';
+        autocompleteResults.classList.remove('visible');
+        return;
+      }
+      
+      try {
+        const response = await fetch(\`/api/autocomplete?q=\${encodeURIComponent(query)}\`);
+        
+        if (!response.ok) throw new Error('Failed to fetch suggestions');
+        
+        const suggestions = await response.json();
+        renderAutocomplete(suggestions);
+      } catch (error) {
+        console.error('Autocomplete error:', error);
+        autocompleteResults.innerHTML = '';
+      }
+    }, 300));
+
+    function renderAutocomplete(suggestions) {
+      if (suggestions.length === 0) {
+        autocompleteResults.innerHTML = '<div class="autocomplete-item">No results found</div>';
+        autocompleteResults.classList.add('visible');
+        return;
+      }
+      
+      autocompleteResults.innerHTML = suggestions.map(suggestion => \`
+        <div class="autocomplete-item" data-coords="\${suggestion.coords}">
+          <i class="fas fa-map-marker-alt"></i>
+          \${suggestion.name}
+        </div>
+      \`).join('');
+      
+      autocompleteResults.classList.add('visible');
+      
+      // Add click handlers
+      document.querySelectorAll('.autocomplete-item').forEach(item => {
+        item.addEventListener('click', () => {
+          selectedDestination = {
+            name: item.textContent.trim(),
+            coords: item.dataset.coords
+          };
+          endInput.value = selectedDestination.name;
+          autocompleteResults.innerHTML = '';
+          autocompleteResults.classList.remove('visible');
+        });
+      });
+    }
+
+    // Close autocomplete when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.input-group')) {
+        autocompleteResults.classList.remove('visible');
+      }
+    });
+
     // Get directions
     searchBtn.addEventListener('click', async () => {
-      if (!startInput.value || !endInput.value) {
-        showError("Please enter start and end locations");
+      if (!startInput.value) {
+        showError("Please enable location access");
+        return;
+      }
+      
+      if (!selectedDestination) {
+        showError("Please select a destination from the suggestions");
         return;
       }
       
@@ -152,7 +247,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
         directionsEl.innerHTML = '';
         
         const response = await fetch(
-          \`/api/directions?from=\${encodeURIComponent(startInput.value)}&to=\${encodeURIComponent(endInput.value)}\`
+          \`/api/directions?from=\${encodeURIComponent(startInput.value)}&to=\${encodeURIComponent(selectedDestination.coords)}\`
         );
         
         if (!response.ok) throw new Error('Failed to get directions');
@@ -170,10 +265,11 @@ const HTML_CONTENT = `<!DOCTYPE html>
     function renderDirections(segments) {
       let html = '<div class="steps">';
       
-      segments.forEach(segment => {
+      segments.forEach((segment, index) => {
         html += \`
           <div class="step">
             <div class="step-header">
+              <div class="step-number">\${index + 1}</div>
               <div class="mode-icon \${segment.mode}">
                 \${getModeIcon(segment.mode)}
               </div>
@@ -230,11 +326,19 @@ const HTML_CONTENT = `<!DOCTYPE html>
       errorEl.classList.remove('hidden');
       setTimeout(() => errorEl.classList.add('hidden'), 5000);
     }
+    
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
   </script>
 </body>
 </html>`;
 
-// Embedded CSS Content
+// Embedded CSS Content with Autocomplete Styles
 const CSS_CONTENT = `:root {
   --primary: #0047AB;
   --secondary: #FFD700;
@@ -288,6 +392,7 @@ h1 {
   background: white;
   border-radius: 0 0 var(--radius) var(--radius);
   box-shadow: var(--shadow);
+  position: relative;
 }
 
 .input-group {
@@ -297,6 +402,7 @@ h1 {
   background: var(--light);
   border-radius: var(--radius);
   padding: 0.8rem;
+  position: relative;
 }
 
 .input-group i {
@@ -387,6 +493,22 @@ button {
   z-index: 2;
 }
 
+.step-number {
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  position: absolute;
+  left: -40px;
+  top: 12px;
+}
+
 .mode-icon {
   width: 48px;
   height: 48px;
@@ -453,6 +575,43 @@ button {
   100% { transform: rotate(360deg); }
 }
 
+/* Autocomplete styles */
+.autocomplete-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  display: none;
+}
+
+.autocomplete-results.visible {
+  display: block;
+}
+
+.autocomplete-item {
+  padding: 0.8rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #eee;
+}
+
+.autocomplete-item:hover {
+  background-color: #f0f2f5;
+}
+
+.autocomplete-item i {
+  color: var(--primary);
+}
+
 @media (max-width: 480px) {
   .step-header {
     flex-direction: column;
@@ -461,5 +620,12 @@ button {
   .step-details {
     padding-left: 0;
     margin-top: 1rem;
+  }
+  
+  .step-number {
+    position: relative;
+    left: 0;
+    top: 0;
+    margin-bottom: 0.5rem;
   }
 }`;
