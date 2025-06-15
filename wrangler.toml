@@ -5,7 +5,6 @@ usage_model = "bundled"
 
 [site]
 bucket = "./public"
-entry-point = "src"
 
 [build]
 command = "npm install"
