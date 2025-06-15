@@ -4,4 +4,3 @@ compatibility_date = "2025-06-15"
 
 [site]
 bucket = "./public"
-entry-point = "src"
