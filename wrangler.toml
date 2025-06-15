@@ -1,6 +1,6 @@
 name = "canberra-transit-guide"
 type = "javascript"
-account_id = "<YOUR_ACCOUNT_ID>"
+account_id = "4c70b3caca54ead29028a7efea58aabd"
 workers_dev = true
 route = ""
 zone_id = ""
