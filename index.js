@@ -1,4 +1,4 @@
-// index.js - Cloudflare Worker with Autocomplete Feature
+// index.js - Complete Canberra Transit Web App with Autocomplete
 const TRIPGO_API_KEY = "12f16e0e9e72b49e496279d8230b0fec";
 
 addEventListener('fetch', event => {
@@ -45,26 +45,38 @@ async function handleRequest(request) {
   // Autocomplete API Endpoint
   if (url.pathname === '/api/autocomplete') {
     const query = url.searchParams.get('q');
+    if (!query || query.length < 3) {
+      return new Response(JSON.stringify([]), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
     const apiUrl = `https://api.tripgo.com/v1/locations.json?q=${encodeURIComponent(query)}&v=11`;
     
-    const response = await fetch(apiUrl, {
-      headers: { 'X-TripGo-Key': TRIPGO_API_KEY }
-    });
-    
-    if (!response.ok) return new Response('Autocomplete error', { status: 500 });
-    
-    const data = await response.json();
-    const suggestions = data.locations.map(loc => ({
-      name: loc.name,
-      coords: `${loc.lat},${loc.lng}`
-    }));
-    
-    return new Response(JSON.stringify(suggestions), {
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'max-age=3600'
-      }
-    });
+    try {
+      const response = await fetch(apiUrl, {
+        headers: { 'X-TripGo-Key': TRIPGO_API_KEY }
+      });
+      
+      if (!response.ok) throw new Error('Autocomplete failed');
+      
+      const data = await response.json();
+      const suggestions = data.locations?.map(loc => ({
+        name: loc.name,
+        coords: `${loc.lat},${loc.lng}`
+      })) || [];
+      
+      return new Response(JSON.stringify(suggestions), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'max-age=3600'
+        }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify([]), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
   }
   
   return new Response('Not found', { status: 404 });
@@ -97,7 +109,7 @@ function getInstruction(segment) {
   }
 }
 
-// Embedded HTML Content with Autocomplete Feature
+// Embedded HTML Content
 const HTML_CONTENT = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,10 +132,10 @@ const HTML_CONTENT = `<!DOCTYPE html>
         <button id="locate"><i class="fas fa-location-crosshairs"></i></button>
       </div>
       
-      <div class="input-group">
+      <div class="input-group" id="destination-group">
         <i class="fas fa-flag"></i>
         <input type="text" id="end" placeholder="Where to?" autocomplete="off">
-        <div id="autocomplete-results" class="autocomplete-results"></div>
+        <div id="autocomplete-results" class="autocomplete-results hidden"></div>
       </div>
       
       <button id="search-btn">Get Directions</button>
@@ -149,6 +161,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
     const loadingEl = document.getElementById('loading');
     const errorEl = document.getElementById('error');
     const autocompleteResults = document.getElementById('autocomplete-results');
+    const destinationGroup = document.getElementById('destination-group');
     
     // Store selected destination
     let selectedDestination = null;
@@ -171,12 +184,11 @@ const HTML_CONTENT = `<!DOCTYPE html>
     });
 
     // Autocomplete functionality
-    endInput.addEventListener('input', debounce(async () => {
-      const query = endInput.value.trim();
+    endInput.addEventListener('input', debounce(async (e) => {
+      const query = e.target.value.trim();
       
       if (query.length < 3) {
-        autocompleteResults.innerHTML = '';
-        autocompleteResults.classList.remove('visible');
+        hideAutocomplete();
         return;
       }
       
@@ -189,14 +201,14 @@ const HTML_CONTENT = `<!DOCTYPE html>
         renderAutocomplete(suggestions);
       } catch (error) {
         console.error('Autocomplete error:', error);
-        autocompleteResults.innerHTML = '';
+        hideAutocomplete();
       }
     }, 300));
 
     function renderAutocomplete(suggestions) {
-      if (suggestions.length === 0) {
-        autocompleteResults.innerHTML = '<div class="autocomplete-item">No results found</div>';
-        autocompleteResults.classList.add('visible');
+      if (!suggestions || suggestions.length === 0) {
+        autocompleteResults.innerHTML = '<div class="autocomplete-item no-results">No results found</div>';
+        autocompleteResults.classList.remove('hidden');
         return;
       }
       
@@ -207,9 +219,9 @@ const HTML_CONTENT = `<!DOCTYPE html>
         </div>
       \`).join('');
       
-      autocompleteResults.classList.add('visible');
+      autocompleteResults.classList.remove('hidden');
       
-      // Add click handlers
+      // Add click handlers to suggestions
       document.querySelectorAll('.autocomplete-item').forEach(item => {
         item.addEventListener('click', () => {
           selectedDestination = {
@@ -217,16 +229,19 @@ const HTML_CONTENT = `<!DOCTYPE html>
             coords: item.dataset.coords
           };
           endInput.value = selectedDestination.name;
-          autocompleteResults.innerHTML = '';
-          autocompleteResults.classList.remove('visible');
+          hideAutocomplete();
         });
       });
     }
 
+    function hideAutocomplete() {
+      autocompleteResults.classList.add('hidden');
+    }
+
     // Close autocomplete when clicking outside
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.input-group')) {
-        autocompleteResults.classList.remove('visible');
+      if (!destinationGroup.contains(e.target)) {
+        hideAutocomplete();
       }
     });
 
@@ -237,8 +252,8 @@ const HTML_CONTENT = `<!DOCTYPE html>
         return;
       }
       
-      if (!selectedDestination) {
-        showError("Please select a destination from the suggestions");
+      if (!endInput.value) {
+        showError("Please enter a destination");
         return;
       }
       
@@ -246,8 +261,10 @@ const HTML_CONTENT = `<!DOCTYPE html>
         showLoading(true);
         directionsEl.innerHTML = '';
         
+        const toCoords = selectedDestination?.coords || endInput.value;
+        
         const response = await fetch(
-          \`/api/directions?from=\${encodeURIComponent(startInput.value)}&to=\${encodeURIComponent(selectedDestination.coords)}\`
+          \`/api/directions?from=\${encodeURIComponent(startInput.value)}&to=\${encodeURIComponent(toCoords)}\`
         );
         
         if (!response.ok) throw new Error('Failed to get directions');
@@ -338,7 +355,7 @@ const HTML_CONTENT = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Embedded CSS Content with Autocomplete Styles
+// Embedded CSS Content
 const CSS_CONTENT = `:root {
   --primary: #0047AB;
   --secondary: #FFD700;
@@ -578,24 +595,24 @@ button {
 /* Autocomplete styles */
 .autocomplete-results {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 5px);
   left: 0;
   right: 0;
   background: white;
-  border-radius: 0 0 var(--radius) var(--radius);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   max-height: 200px;
   overflow-y: auto;
   z-index: 1000;
+  border: 1px solid #ddd;
+}
+
+.autocomplete-results.hidden {
   display: none;
 }
 
-.autocomplete-results.visible {
-  display: block;
-}
-
 .autocomplete-item {
-  padding: 0.8rem 1rem;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -604,12 +621,32 @@ button {
   border-bottom: 1px solid #eee;
 }
 
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
 .autocomplete-item:hover {
-  background-color: #f0f2f5;
+  background-color: #f5f5f5;
 }
 
 .autocomplete-item i {
   color: var(--primary);
+  width: 20px;
+  text-align: center;
+}
+
+.autocomplete-item.no-results {
+  color: #666;
+  cursor: default;
+}
+
+.autocomplete-item.no-results:hover {
+  background-color: white;
+}
+
+#destination-group {
+  position: relative;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 480px) {
