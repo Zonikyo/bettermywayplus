@@ -1,5 +1,5 @@
 name = "myway"
-compatibility_date = "2024-06-15"
+compatibility_date = "2025-06-15"
 
 [site]
 bucket = "./public"
