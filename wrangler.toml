@@ -7,4 +7,8 @@ main = "src/index.js"
 # Assets (static files) will be uploaded to KV via `wrangler publish`
 [site]
   bucket = "./public"
-  
+
+[build]
+  command = "npm install"
+  upload.format = "modules"
+  externals = ["@cloudflare/kv-asset-handler"]
