@@ -1,11 +1,7 @@
 name = "myway"
 main = "src/index.js"
 compatibility_date = "2025-06-15"
-usage_model = "bundled"
 
 [site]
 bucket = "./public"
-
-[build]
-command = "npm install"
-upload.format = "service-worker"
+entry-point = "src"
