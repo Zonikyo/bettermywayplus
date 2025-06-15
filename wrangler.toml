@@ -9,4 +9,4 @@ compatibility_date = "2025-06-15"
 # Assets (static files) will be uploaded to KV via `wrangler publish`
 [site]
   bucket = "./public"
-  entry-point = "src"
+  main = "src/index.js"
