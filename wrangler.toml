@@ -1,5 +1,4 @@
 name = "myway"
-type = "javascript"
 account_id = "4c70b3caca54ead29028a7efea58aabd"
 workers_dev = true
 compatibility_date = "2025-06-15"
