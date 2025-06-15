@@ -3,15 +3,10 @@ main = "src/index.js"
 compatibility_date = "2025-06-15"
 usage_model = "bundled"
 
-[build]
-command = "npm install"
-
 [site]
 bucket = "./public"
 entry-point = "src"
 
-[build.upload]
-format = "service-worker"
-
 [build]
+command = "npm install"
 upload.format = "service-worker"
