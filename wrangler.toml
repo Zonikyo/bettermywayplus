@@ -1,14 +1,17 @@
 name = "myway"
-account_id = "4c70b3caca54ead29028a7efea58aabd"
-workers_dev = true
-compatibility_date = "2025-06-15"
 main = "src/index.js"
-
-# Assets (static files) will be uploaded to KV via `wrangler publish`
-[site]
-  bucket = "./public"
+compatibility_date = "2025-06-15"
+usage_model = "bundled"
 
 [build]
-  command = "npm install"
-  upload.format = "modules"
-  externals = ["@cloudflare/kv-asset-handler"]
+command = "npm install"
+
+[site]
+bucket = "./public"
+entry-point = "src"
+
+[build.upload]
+format = "service-worker"
+
+[build]
+upload.format = "service-worker"
