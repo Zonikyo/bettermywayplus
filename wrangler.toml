@@ -4,6 +4,7 @@ account_id = "4c70b3caca54ead29028a7efea58aabd"
 workers_dev = true
 route = ""
 zone_id = ""
+compatibility_date = "2025-06-15"
 
 # Assets (static files) will be uploaded to KV via `wrangler publish`
 [site]
